@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chatapp</title>
+</head>
+<body>
+    <body>
+
+        <!-- コンテンツ表示画面 -->
+        <div>
+            <div>
+                名前：<input type="text" id="uname">
+            </div>
+            <div>
+                <textarea id="text" cols="30" rows="10"></textarea>
+                <button id="send">送信</button>
+            </div>
+            <div id="output" style="overflow: auto;height: 300px;"></div>
+        </div>
+        <!-- コンテンツ表示画面 -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+            import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+                from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyCWnPPu20yGprMQWGa9LOb7QfGr_KJcpHk",
+                authDomain: "gsdev0603-d03df.firebaseapp.com",
+                projectId: "gsdev0603-d03df",
+                storageBucket: "gsdev0603-d03df.appspot.com",
+                messagingSenderId: "1037190614524",
+                appId: "1:1037190614524:web:e2635d36d4c7d0a5c87679"
+            };
+            const app = initializeApp(firebaseConfig);//firebaseConfigという設定情報をもとに、firebaseの機能が使えるように初期設定を行う。
+            const db = getDatabase(app); //RealtimeDBに接続する準備をしている。
+            const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+            //firebaseにデータを登録
+            $("#send").on("click", function(){
+                const msg = {
+                    uname : $("#uname").val(),
+                    text : $("#text").val()
+                }
+                const newPostRef = push(dbRef);//ユニークキーを生成、ここ重要
+                set(newPostRef, msg);
+            });
+
+            //firebaseからデータ取得
+            onChildAdded(dbRef, function(data){//dbRefに接続して、以下を実行しますよ。dataという名前を設定
+                const msg = data.val();
+                const key = data.key;//Realtimeデータベース内で発行あれたユニークキーを取得している。
+                // console.log(msg,key)
+            //取得したデータを表示    
+                const h = `
+                <div>
+                    <p>${msg.uname}</p>
+                    <p>${msg.text}</p>
+                </div>
+                `
+                $("#output").append(h);
+            });
+
+
+
+
+
+
+        </script>
+
+        
+</body>
+</html>

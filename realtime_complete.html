@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE風アプリ</title>
+</head>
+
+<body>
+    <!-- コンテンツ表示画面 -->
+    <div>
+        <div id="output" style="overflow: auto;height: 300px;"></div>
+        <div>
+            名前：<input type="text" id="uname">
+        </div>
+        <div>
+            <textarea id="text" cols="30" rows="2"></textarea>
+            <button id="send">送信</button>
+        </div>
+        <button id="out">ログアウト</button>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+            from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } 
+            from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    
+           
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWnPPu20yGprMQWGa9LOb7QfGr_KJcpHk",
+            authDomain: "gsdev0603-d03df.firebaseapp.com",
+            databaseURL: "https://gsdev0603-d03df-default-rtdb.firebaseio.com",
+            projectId: "gsdev0603-d03df",
+            storageBucket: "gsdev0603-d03df.appspot.com",
+            messagingSenderId: "1037190614524",
+            appId: "1:1037190614524:web:e2635d36d4c7d0a5c87679"
+        };
+        const app = initializeApp(firebaseConfig);//firebaseConfigという設定情報をもとに、firebaseの機能が使えるように初期設定を行う。
+        const db = getDatabase(app); //RealtimeDBに接続する準備をしている。
+        const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+        //データ登録(Click)
+        
+
+        //データ登録(Enter)
+        // $("#text").on("keydown", function (e) {
+        //     console.log(e);        //e変数の中身を確認！！
+        //     if (e.keyCode == 13) {   //EnterKey=13
+        //         const msg = {
+        //             uname: $("#uname").val(),//
+        //             text: $("#text").val()
+        //         }
+        //         const newPostRef = push(dbRef); //ユニークKEYを生成、dbRefにPush、送りますよ
+        //         set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録、セットしますよ
+        //     }
+        // });
+
+        //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+        // onChildAdded(dbRef, function (data) {//dbRefを接続して、以下を実行しますよ。dataという名前を設定
+        //     const msg = data.val();    //オブジェクトデータを取得し、変数msgに代入
+        //     const key = data.key;      //データのユニークキー（削除や更新に使用可能）
+        //     // //表示用テキスト・HTMLを作成
+        //     // let h = '<p>';
+        //     // h += msg.uname;
+        //     // h += '<br>';
+        //     // h += msg.text;
+        //     // h += '</p>';
+        //     // $("#output").append(h); //#outputの最後に追加
+
+        //     let h = `
+        //     <div>
+        //         <p>${msg.uname}</p>
+        //         <p>${msg.text}</p>
+        //     </div>
+        //     `
+        //     console.log(h)
+        //     $("#output").append(h);
+        // });
+        
+//###############################################
+//GoogleAuth用
+//###############################################
+const provider = new GoogleAuthProvider();
+provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+const auth = getAuth();
+
+//###############################################
+//Loginしていれば処理します
+//###############################################
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        const uid = user.uid;
+        //ユーザー情報取得できます
+        if (user !== null) {
+            user.providerData.forEach((profile) => {
+                //Login情報取得
+                $("#uname").text(profile.displayName);
+                // $("#prof").attr("src",profile.photoURL);
+                // console.log("Sign-in provider: " + profile.providerId);
+                // console.log("Provider-specific UID: " + profile.uid);
+                // console.log("Email: " + profile.email);
+                // console.log("Photo URL: " + profile.photoURL);
+                
+            });
+            // $("#status").fadeOut(500);
+        }
+
+        //データ登録(Click)
+        $("#send").on("click", function () {
+            const msg = {
+                uname: $("#uname").val(),
+                text: $("#text").val()
+            }
+            const newPostRef = push(dbRef); //ユニークKEYを生成
+            console.log(newPostRef)
+            set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録、セットしますよ
+        });
+
+        // $("#send").on("click",function() {
+        //     const msg = {
+        //         title: $("#title").val(),
+        //         text:  $("#text").val()
+        //     }
+        //     const dbRef = ref( db, "users/"+uid+"/memo/"+$("#title").val() ); //RealtimeDB内の"chat"を使う
+        //     set(dbRef, msg);  //DBに値をセットする
+        // });
+
+        //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+        // $("#title").on("change",function(){
+        //     const dbRef = ref( db, "users/"+uid+"/memo/"+$(this).val() ); //RealtimeDB内の"chat"を使う
+        //     onValue(dbRef, function(data){   
+        //         const msg  = data.val();    //オブジェクトデータを取得し、変数msgに代入
+        //         console.log(msg);
+        //         // const key  = data.key;      //データのユニークキー（削除や更新に使用可能）
+        //         $("#text").val(msg.text);
+        //     });
+        // });
+
+    } else {
+        _redirect();  // User is signed out
+    }
+});
+
+
+
+
+
+//###############################################
+//Login画面へリダイレクト(関数作成)
+//###############################################
+function _redirect(){
+    location.href="login.html";
+}
+
+
+    </script>
+</body>
+
+</html>
